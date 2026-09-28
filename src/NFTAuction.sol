@@ -244,6 +244,10 @@ contract NFTAuction is
             "Auction contract not approved"
         );
 
+        // 托管 NFT：转入合约保管，修复双重挂单 + 撤回 approval 漏洞。
+        // 创建后 NFT 由合约持有，卖家无法重复挂单或撤回授权影响结算。
+        nft.transferFrom(msg.sender, address(this), tokenId);
+
         auctionCounter++;
         uint256 auctionId = auctionCounter;
 
@@ -287,6 +291,13 @@ contract NFTAuction is
 
         auction.active = false;
         auction.ended = true;
+
+        // 退还托管的 NFT 给卖家
+        IERC721(auction.nftContract).transferFrom(
+            address(this),
+            auction.seller,
+            auction.tokenId
+        );
 
         emit AuctionCancelled(auctionId);
     }
@@ -411,9 +422,9 @@ contract NFTAuction is
                 10000;
             uint256 sellerAmount = auction.highestBidAmount - feeAmount;
 
-            // 转移NFT给出价最高者
+            // 从合约托管转 NFT 给赢家
             IERC721(auction.nftContract).safeTransferFrom(
-                auction.seller,
+                address(this),
                 auction.highestBidder,
                 auction.tokenId
             );
@@ -454,7 +465,12 @@ contract NFTAuction is
                 auction.highestBidUsd
             );
         } else {
-            // 没有人出价，拍卖流拍
+            // 没有人出价，拍卖流拍，退回托管的 NFT 给卖家
+            IERC721(auction.nftContract).safeTransferFrom(
+                address(this),
+                auction.seller,
+                auction.tokenId
+            );
             emit AuctionEnded(auctionId, address(0), address(0), 0, 0);
         }
     }

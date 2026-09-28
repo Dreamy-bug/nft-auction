@@ -17,3 +17,7 @@ frontend/node_modules/
 
 # Claude Code local config
 .claude/
+lcov.info
+
+# 交付打包产物（可按 deliverables/ 重新生成，不入库）
+nft-auction-deliverable.zip

@@ -107,9 +107,9 @@ contract NFTAuctionV2 is NFTAuction {
             uint256 feeAmount = (auction.highestBidAmount * feeBps) / 10000;
             uint256 sellerAmount = auction.highestBidAmount - feeAmount;
 
-            // 转移NFT给出价最高者
+            // 从合约托管转 NFT 给赢家
             IERC721(auction.nftContract).safeTransferFrom(
-                auction.seller,
+                address(this),
                 auction.highestBidder,
                 auction.tokenId
             );
@@ -150,7 +150,12 @@ contract NFTAuctionV2 is NFTAuction {
                 auction.highestBidUsd
             );
         } else {
-            // 没有人出价，拍卖流拍
+            // 没有人出价，拍卖流拍，退回托管的 NFT 给卖家
+            IERC721(auction.nftContract).safeTransferFrom(
+                address(this),
+                auction.seller,
+                auction.tokenId
+            );
             emit AuctionEnded(auctionId, address(0), address(0), 0, 0);
         }
     }
