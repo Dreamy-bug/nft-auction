@@ -174,12 +174,15 @@ cast send <PROXY_ADDRESS> "addSupportedToken(address,address)" \
 
 | 合约 | 地址 |
 |------|------|
-| NFTAuction Proxy（交互入口） | `0xF2adaB519444dE79b924A5dbfC5d4BeE9934ebD3` |
-| NFTAuction Implementation V1 | `0xa030bafCdceD188FF0956df9b43a4dACD8a1026D` |
-| NFTAuctionV2 Implementation | `0xd49fa4791E266330Ce3F630F7dc068E4F6A7EFeD` |
-| MyNFT | `0xb1cF5AA6a253Ea7Dbf15D5e948Bf58054f8b61f4` |
-| MockUSDC | `0xfa3E9dd2bfBA452456f622fb1bd348aC65C4f3Cf` |
+| NFTAuction Proxy（交互入口） | `0x4515b3F0e70f136B1768433d9df208D90aCb9A48` |
+| NFTAuction Implementation V1 | `0x0e73Bb70fD615e9a77bbE700b30eD9A924524097` |
+| NFTAuctionV2 Implementation（当前激活） | `0x71218133E02B4acc0fEbb67eA76125907B59f19B` |
+| MyNFT | `0x06d2CEA962A471D71F7485cf9124E3eCF57BE99a` |
+| MockUSDC | `0x7DAD41c6CC96f508D9fa2EDEC38708FC2d7F236E` |
+| USDC/USD Feed (Mock) | `0x279eFaaa49D6Eae9cD96FD6be72Ac8cF1b384Ac3` |
 | ETH/USD Feed | `0x694AA1769357215DE4FAC081bf1f309aDC325306`（真实 Chainlink） |
+
+> 以上为 2026-09-28 托管模式修复后的重新部署地址。旧地址（2026-09-18，含漏洞）已废弃，见 `deliverables/DEPLOYMENT.md`。
 
 部署详情见 `deliverables/DEPLOYMENT.md`。
 
