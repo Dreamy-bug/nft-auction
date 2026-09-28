@@ -9,6 +9,7 @@ nft-auction/
 ├── foundry.toml              # Foundry 配置文件
 ├── .env.example              # 环境变量模板
 ├── README.md                 # 项目文档
+├── homework03.md             # 作业题目
 ├── src/
 │   ├── MyNFT.sol             # ERC721 NFT 合约
 │   ├── NFTAuction.sol        # 拍卖合约（UUPS 可升级）
@@ -18,11 +19,15 @@ nft-auction/
 │   │   ├── MockERC20.sol     # ERC20 Mock
 │   │   └── MockAggregator.sol # Chainlink 预言机 Mock
 │   ├── MyNFT.t.sol           # NFT 合约测试
-│   └── NFTAuction.t.sol      # 拍卖合约测试
+│   └── NFTAuction.t.sol      # 拍卖合约测试 + V2 升级测试
 ├── script/
-│   ├── DeployNFTAuction.s.sol # 部署脚本
-│   └── UpgradeNFTAuction.s.sol # 升级脚本
-└── lib/                      # 依赖库
+│   ├── DeployNFTAuction.s.sol  # V1 + UUPS proxy 部署
+│   ├── UpgradeNFTAuction.s.sol # 升级到 V2
+│   ├── DeploySepoliaDemo.s.sol # Sepolia 演示合约（NFT/USDC/feed）
+│   └── DeployLocal.s.sol       # 本地 anvil 一键演示
+├── frontend/                 # MetaMask 前端演示（Sepolia 配置）
+├── deliverables/             # 作业交付物（测试报告/部署地址/项目文档）
+└── lib/                      # 依赖库（OpenZeppelin / Chainlink / forge-std）
 ```
 
 ## 功能说明
@@ -80,6 +85,9 @@ cd nft-auction
 forge install OpenZeppelin/openzeppelin-contracts
 forge install OpenZeppelin/openzeppelin-contracts-upgradeable
 forge install smartcontractkit/chainlink
+# @chainlink/contracts 的实际来源（remappings 指向这里）：
+#   下载 chainlink-brownie-contracts 到 lib/，或
+#   forge install smartcontractkit/chainlink-brownie-contracts
 ```
 
 2. 配置环境变量：
@@ -162,13 +170,18 @@ cast send <PROXY_ADDRESS> "addSupportedToken(address,address)" \
     --private-key <PRIVATE_KEY>
 ```
 
-## 合约地址（Sepolia 测试网）
+## 合约地址（Sepolia 测试网，已部署并 Etherscan 验证）
 
 | 合约 | 地址 |
 |------|------|
-| NFTAuction Proxy | （部署后填写）|
-| NFTAuction Implementation V1 | （部署后填写）|
-| NFTAuctionV2 Implementation | （升级后填写）|
+| NFTAuction Proxy（交互入口） | `0xF2adaB519444dE79b924A5dbfC5d4BeE9934ebD3` |
+| NFTAuction Implementation V1 | `0xa030bafCdceD188FF0956df9b43a4dACD8a1026D` |
+| NFTAuctionV2 Implementation | `0xd49fa4791E266330Ce3F630F7dc068E4F6A7EFeD` |
+| MyNFT | `0xb1cF5AA6a253Ea7Dbf15D5e948Bf58054f8b61f4` |
+| MockUSDC | `0xfa3E9dd2bfBA452456f622fb1bd348aC65C4f3Cf` |
+| ETH/USD Feed | `0x694AA1769357215DE4FAC081bf1f309aDC325306`（真实 Chainlink） |
+
+部署详情见 `deliverables/DEPLOYMENT.md`。
 
 ## 技术栈
 
