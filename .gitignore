@@ -1,0 +1,19 @@
+# Secrets — never commit
+.env
+.env.local
+
+# Foundry build artifacts
+broadcast/
+cache/
+out/
+foundry.lock
+
+# 手动下载的 chainlink brownie contracts（非 submodule，用 forge install 重建）
+# 打包 zip 时会单独包含；git 仓库不跟踪以保持干净
+lib/chainlink-brownie-contracts/
+
+# Frontend
+frontend/node_modules/
+
+# Claude Code local config
+.claude/

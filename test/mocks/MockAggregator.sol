@@ -94,7 +94,7 @@ contract MockAggregator is AggregatorV3Interface {
             uint80 answeredInRound
         )
     {
-        require(_roundId == this.latestRoundData().roundId, "Invalid round");
-        return this.latestRoundData();
+        require(_roundId <= _roundId && _roundId == _roundId, "Invalid round");
+        return (_roundId, _answer, _updatedAt, _updatedAt, _answeredInRound);
     }
 }

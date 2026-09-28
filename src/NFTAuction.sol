@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
@@ -17,7 +17,7 @@ import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.so
 contract NFTAuction is
     Initializable,
     OwnableUpgradeable,
-    ReentrancyGuardUpgradeable,
+    ReentrancyGuard,
     UUPSUpgradeable
 {
     // ============ 类型定义 ============
@@ -127,7 +127,7 @@ contract NFTAuction is
     // ============ 自定义错误 ============
 
     error AuctionNotActive();
-    error AuctionEnded();
+    error AuctionAlreadyClosed();
     error AuctionNotEnded();
     error AuctionAlreadyEnded();
     error BidTooLow(uint256 currentBidUsd, uint256 newBidUsd);
@@ -162,8 +162,6 @@ contract NFTAuction is
             revert ZeroAddress();
 
         __Ownable_init(msg.sender);
-        __ReentrancyGuard_init();
-        __UUPSUpgradeable_init();
 
         ethUsdPriceFeed = AggregatorV3Interface(_ethUsdPriceFeed);
         feeRecipient = _feeRecipient;
@@ -305,8 +303,8 @@ contract NFTAuction is
         Auction storage auction = auctions[auctionId];
 
         if (!auction.active) revert AuctionNotActive();
-        if (auction.ended) revert AuctionEnded();
-        if (block.timestamp >= auction.endTime) revert AuctionEnded();
+        if (auction.ended) revert AuctionAlreadyClosed();
+        if (block.timestamp >= auction.endTime) revert AuctionAlreadyClosed();
         if (auction.seller == msg.sender) revert SellerCannotBid();
 
         // 将ETH转换为USD
@@ -353,8 +351,8 @@ contract NFTAuction is
         Auction storage auction = auctions[auctionId];
 
         if (!auction.active) revert AuctionNotActive();
-        if (auction.ended) revert AuctionEnded();
-        if (block.timestamp >= auction.endTime) revert AuctionEnded();
+        if (auction.ended) revert AuctionAlreadyClosed();
+        if (block.timestamp >= auction.endTime) revert AuctionAlreadyClosed();
         if (auction.seller == msg.sender) revert SellerCannotBid();
 
         // 将ERC20代币金额转换为USD
@@ -397,7 +395,7 @@ contract NFTAuction is
      * @param auctionId 拍卖ID
      * @notice 任何人都可以在拍卖结束后调用此函数进行结算
      */
-    function endAuction(uint256 auctionId) external nonReentrant {
+    function endAuction(uint256 auctionId) external virtual nonReentrant {
         Auction storage auction = auctions[auctionId];
 
         if (!auction.active) revert AuctionNotActive();
@@ -515,10 +513,7 @@ contract NFTAuction is
         if (answeredInRound < roundId) revert StalePrice();
 
         uint8 feedDecimals = ethUsdPriceFeed.decimals();
-        // ethAmount (18 decimals) * price (feedDecimals) / 10^(feedDecimals) = value in ETH * price per ETH
-        // Then divide by 1e(18 - USD_DECIMALS) to get USD_DECIMALS precision
-        // Simplified: ethAmount * price / 10^feedDecimals gives USD value with 18 decimals
-        // We want 8 decimals: (ethAmount * price) / 10^(feedDecimals + 18 - 8)
+        // ethAmount (18 decimals) * price => divide by 10^(feedDecimals + 10) to get 8-decimal USD
         usdValue =
             (ethAmount * uint256(price)) /
             (10 ** (uint256(feedDecimals) + 18 - USD_DECIMALS));
@@ -552,9 +547,6 @@ contract NFTAuction is
 
         uint8 feedDecimals = priceFeed.decimals();
 
-        // For standard ERC20 (18 decimals):
-        // tokenAmount * price / 10^feedDecimals / 10^(18 - 8) = USD value in 8 decimals
-        // = tokenAmount * price / 10^(feedDecimals + 10)
         usdValue =
             (tokenAmount * uint256(price)) /
             (10 ** (uint256(feedDecimals) + 18 - USD_DECIMALS));

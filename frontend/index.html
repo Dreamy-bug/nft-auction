@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NFT 拍卖前端演示</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.5/ethers.umd.min.js"></script>
+  <script src="abi.js"></script>
+  <script src="contracts.js"></script>
+</head>
+<body>
+  <header>
+    <h1>NFT 拍卖前端演示</h1>
+    <span class="net" id="netInfo">未连接</span>
+    <span class="tag role" id="roleTag" style="display:none">角色</span>
+    <span class="mono" id="acctInfo">未连接账户</span>
+    <span class="tag" id="balTag" style="display:none">余额</span>
+    <button id="connectBtn" onclick="App.connect()">连接 MetaMask</button>
+    <button class="ghost" onclick="App.copyKey()">复制当前账户私钥</button>
+  </header>
+
+  <main>
+    <div class="card full">
+      <h2>部署信息</h2>
+      <div id="deployInfo" class="kv">连接后显示…</div>
+      <details class="full" style="margin-top:8px">
+        <summary>查看 Sepolia 演示账户（点击展开，仅测试网演示用）</summary>
+        <div id="acctList" class="kv" style="margin-top:8px"></div>
+        <div class="hint">MetaMask 添加网络：RPC https://ethereum-sepolia-rpc.publicnode.com，链ID 11155111，货币符号 ETH。
+          导入 deployer 私钥（项目 .env 中的 PRIVATE_KEY）即可扮演 owner/seller。竞拍者建议用你自己的 Sepolia 账户，让 deployer 转一些 USDC 过去。</div>
+      </details>
+    </div>
+
+    <!-- 0. 准备工具 -->
+    <div class="card">
+      <h2>0. 准备工具（owner）</h2>
+      <div class="row"><label>铸 NFT 给</label><input id="mintTo" placeholder="地址" style="width:340px" /></div>
+      <div class="row"><button onclick="App.mintNFT()">铸 1 个 NFT</button><span class="hint">默认铸给当前账户</span></div>
+      <div class="row"><label>铸 USDC 给</label><input id="usdcTo" placeholder="地址" style="width:340px" /></div>
+      <div class="row"><input id="usdcAmt" type="number" value="10000" /><label>USDC</label>
+        <button onclick="App.mintUSDC()">铸 USDC</button></div>
+      <div class="hint">owner 已在部署时铸了 1 个 NFT 给 seller、各 100 万 USDC 给 bidder1/2。</div>
+    </div>
+
+    <!-- 1. 卖家 -->
+    <div class="card">
+      <h2>1. 卖家：授权 + 创建拍卖（account1）</h2>
+      <div class="row"><button onclick="App.approveNFT()">setApprovalForAll(拍卖合约)</button></div>
+      <div class="row"><label>tokenId</label><input id="cTokenId" type="number" value="1" /></div>
+      <div class="row"><label>起拍价 USD</label><input id="cStart" type="number" value="1000" step="any" /></div>
+      <div class="row"><label>持续 秒</label><input id="cDur" type="number" value="120" /></div>
+      <div class="row"><button onclick="App.createAuction()">创建拍卖</button>
+        <span class="hint">默认 $1000 / 2分钟，便于快速结算</span></div>
+      <div class="kv">当前 auctionCounter: <b id="counter">-</b>　最新 auctionId: <b id="lastId">-</b></div>
+    </div>
+
+    <!-- 2. 竞拍 -->
+    <div class="card">
+      <h2>2. 竞拍</h2>
+      <div class="row"><label>auctionId</label><input id="bId" type="number" value="1" />
+        <button class="ghost" onclick="App.refreshAuction()">查询状态</button></div>
+      <div class="kv" id="aucInfo">-</div>
+      <div class="row"><label>ETH 出价</label><input id="bEth" type="number" value="0.55" step="0.01" />
+        <button onclick="App.bidEth()">bidWithEth</button></div>
+      <div class="row"><label>USDC 出价</label><input id="bUsdc" type="number" value="1100" step="any" />
+        <button class="ghost" onclick="App.approveUSDC()">先 approve USDC</button>
+        <button onclick="App.bidERC20()">bidWithERC20</button></div>
+      <div class="hint">ETH=$2000, USDC=$1。要超过最低出价(起拍或+5%)。跨币种可互相超越。</div>
+    </div>
+
+    <!-- 3. 结算 -->
+    <div class="card">
+      <h2>3. 结算</h2>
+      <div class="row"><label>auctionId</label><input id="eId" type="number" value="1" /></div>
+      <div class="row"><button onclick="App.endAuction()">endAuction</button>
+        <span class="hint">需 endTime 已过；任何人可调用</span></div>
+      <div class="kv" id="endInfo">-</div>
+    </div>
+
+    <!-- 4. 退款 -->
+    <div class="card">
+      <h2>4. 退款（被超越的出价者）</h2>
+      <div class="row"><label>auctionId</label><input id="wId" type="number" value="1" /></div>
+      <div class="row"><button class="ghost" onclick="App.checkPending()">查我的待退款</button></div>
+      <div class="kv" id="pendingInfo">-</div>
+      <div class="row">
+        <button onclick="App.withdraw('0x0000000000000000000000000000000000000000')">提取 ETH</button>
+        <button class="ghost" onclick="App.withdrawUsdc()">提取 USDC</button>
+      </div>
+    </div>
+
+    <!-- 5. V2 升级 -->
+    <div class="card full">
+      <h2>5. V2 升级 + 动态手续费（owner）</h2>
+      <div class="row"><button onclick="App.checkVersion()">查当前版本</button>
+        <span id="verInfo" class="kv"></span></div>
+      <div class="row"><button onclick="App.upgradeV2()">upgradeToAndCall → V2</button>
+        <span class="hint">费率档 2.5%/2.0%/1.5% @ $1k/$10k</span></div>
+      <div class="row"><button class="ghost" onclick="App.showFeeTiers()">查 V2 动态费率</button>
+        <span id="feeInfo" class="kv"></span></div>
+      <div class="hint">升级后可创建一个高额(>$10k)拍卖，结算时手续费为 1.5% 而非 2.5%。</div>
+    </div>
+
+    <!-- 日志 -->
+    <div class="card full">
+      <h2>操作日志</h2>
+      <div class="log" id="log"></div>
+      <div class="row" style="margin-top:8px"><button class="ghost" onclick="document.getElementById('log').innerHTML=''">清空</button></div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

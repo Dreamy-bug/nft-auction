@@ -58,10 +58,8 @@ contract DeployNFTAuction is Script {
     }
 }
 
-/**
- * @dev 简化的ERC1967Proxy合约，用于部署脚本
- * 注意：在生产环境中，建议使用OpenZeppelin的@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol
- */
+//ERC1967Proxy: 简化实现，用于部署脚本
+//在生产环境中，建议使用OpenZeppelin的ERC1967Proxy
 contract ERC1967Proxy {
     bytes32 internal constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 

@@ -9,10 +9,15 @@ via_ir = false
 
 remappings = [
     "@openzeppelin/=lib/openzeppelin-contracts/",
-    "@openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/",
-    "@chainlink/=lib/chainlink/",
-    "@forge-std/=lib/forge-std/src/"
+    "@openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "@chainlink/=lib/chainlink-brownie-contracts/",
+    "forge-std/=lib/forge-std/src/"
 ]
+
+# 排除依赖库中的测试文件，避免编译错误
+skip = ["lib/openzeppelin-contracts-upgradeable/test", "lib/openzeppelin-contracts/test"]
+ffi = false
+force = false
 
 [profile.ci]
 optimizer_runs = 1

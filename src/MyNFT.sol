@@ -37,7 +37,7 @@ contract MyNFT is ERC721, ERC721URIStorage, Ownable {
      * @param uri NFT的元数据URI（通常是IPFS链接）
      * @return 新创建的Token ID
      * @notice 只有合约所有者可以铸造
-     */
+     */ 
     function mint(address to, string memory uri) public onlyOwner returns (uint256) {
         require(_tokenIdCounter < MAX_SUPPLY, "Max supply reached");
         require(to != address(0), "Cannot mint to zero address");

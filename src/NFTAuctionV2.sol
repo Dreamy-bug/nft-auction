@@ -88,21 +88,6 @@ contract NFTAuctionV2 is NFTAuction {
     }
 
     /**
-     * @dev 计算手续费金额（覆盖内部计算逻辑）
-     * @param amountUsd USD金额
-     * @param rawAmount 原始代币金额
-     * @return feeAmount 手续费原始代币金额
-     */
-    function calculateFee(
-        uint256 amountUsd,
-        uint256 rawAmount
-    ) public pure returns (uint256 feeAmount) {
-        // V2使用动态费率，这个函数提供给外部查询
-        // 实际手续费计算在endAuction中完成
-        feeAmount = 0; // placeholder - actual calculation happens in endAuction
-    }
-
-    /**
      * @dev 结束拍卖（重写以支持动态手续费）
      * @param auctionId 拍卖ID
      */
@@ -254,7 +239,7 @@ contract NFTAuctionV2 is NFTAuction {
     // ============ 存储间隙 ============
 
     /**
-     * @dev 为未来升级预留存储空间（减少5个槽位用于V2新增变量）
+     * @dev 为未来升级预留存储空间（V2新增4个槽位，减少相应数量）
      */
-    uint256[35] private __gap;
+    uint256[36] private __gap;
 }
